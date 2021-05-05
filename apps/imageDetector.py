@@ -88,8 +88,8 @@ def app():
             return (locs, preds)
 
         # load our serialized face detector model from disk
-        prototxtPath = r"face_detector\deploy.prototxt"
-        weightsPath = r"face_detector\res10_300x300_ssd_iter_140000.caffemodel"
+        prototxtPath = r"C:\\Users\\Aradhya\Desktop\\Face_Mask_Detection\\apps\\face_detector\\deploy.prototxt"
+        weightsPath = r"C:\\Users\\Aradhya\\Desktop\\Face_Mask_Detection\\apps\\face_detector\\res10_300x300_ssd_iter_140000.caffemodel"
         faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
 
         # load the face mask detector model from disk
