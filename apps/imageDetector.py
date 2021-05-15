@@ -11,17 +11,18 @@ import cv2
 import os
 from os.path import dirname, join
 import streamlit as st
+from matplotlib import pyplot
+from matplotlib.patches import Rectangle
+from mtcnn.mtcnn import MTCNN
 
 def app():
     model = tf.keras.models.load_model('mask_detector.model')
-
     st.write("""
             #  Detecting Face Mask in an Image
             """
             )
     st.write("Upload an `image` to detect whether people are wearing masks or not!")
-    file = st.file_uploader("Please upload an image file", type=["jpg", "png"])
-
+    file = st.file_uploader("Please upload an image file", type=["jpg", "png","jpeg"])
 
     if file is not None:
         img = Image.open(file)
@@ -52,7 +53,7 @@ def app():
 
                 # filter out weak detections by ensuring the confidence is
                 # greater than the minimum confidence
-                if confidence > 0.5:
+                if confidence > 0.4:
                     # compute the (x, y)-coordinates of the bounding box for
                     # the object
                     box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
@@ -87,14 +88,40 @@ def app():
             # return a 2-tuple of the face locations and their corresponding
             # predictions
             return (locs, preds)
+        def detect_and_predict_mask_mtcnn(frame, faceNet, maskNet):
+            result_list = faceNet.detect_faces(frame)
+            faces = []
+            locs = []
+            preds = []
+            for result in result_list:
+                x1, y1, width, height = result['box']
+                # bug fix
+                x1, y1 = abs(x1), abs(y1)
+                x2, y2 = x1 + width, y1 + height
+                # extract the face
+                face = frame[y1:y2, x1:x2]
+                face = cv2.cvtColor(face, cv2.COLOR_BGR2RGB)
+                face = cv2.resize(face, (224, 224))
+                face = img_to_array(face)
+                face = preprocess_input(face)
+                # add the face and bounding boxes to their respective
+                # lists
+                faces.append(face)
+                locs.append((x1, y1, x2, y2))
+            if len(faces) > 0:
+                faces = np.array(faces, dtype="float32")
+                preds = maskNet.predict(faces, batch_size=32)
+            return (locs, preds)
+
+
 
         # load our serialized face detector model from disk
         # prototxtPath = r"C:\\Users\\Aradhya\Desktop\\Face_Mask_Detection\\apps\\face_detector\\deploy.prototxt"
         # weightsPath = r"C:\\Users\\Aradhya\\Desktop\\Face_Mask_Detection\\apps\\face_detector\\res10_300x300_ssd_iter_140000.caffemodel"
-        prototxtPath = join(dirname(__file__), "deploy.prototxt")
-        weightsPath = join(dirname(__file__), "res10_300x300_ssd_iter_140000.caffemodel")
-        faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
-
+        # prototxtPath = join(dirname(__file__), "deploy.prototxt")
+        # weightsPath = join(dirname(__file__), "res10_300x300_ssd_iter_140000.caffemodel")
+        # faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
+        faceNet = MTCNN()
         # load the face mask detector model from disk
         maskNet = load_model("mask_detector.model")
 
@@ -113,7 +140,8 @@ def app():
 
             # detect faces in the frame and determine if they are wearing a
             # face mask or not
-        (locs, preds) = detect_and_predict_mask(frame, faceNet, maskNet)
+        # (locs, preds) = detect_and_predict_mask(frame, faceNet, maskNet)
+        (locs, preds) = detect_and_predict_mask_mtcnn(frame, faceNet, maskNet)
 
         totalFaces = len(locs)
         facesWithMask = 0
