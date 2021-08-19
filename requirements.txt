@@ -6,3 +6,4 @@ opencv-contrib-python==4.5.1.48
 matplotlib==3.2.1
 scipy==1.4.1
 streamlit==0.81.0
+mtcnn==0.1.1
