@@ -12,3 +12,5 @@ This is a computer vision machine learning project to detect whether people are 
 - **train_mask_detector.py**: file to train the model for detecting face masks
 - **mask_detector.model**: model to detect face masks
 - **detect_mask_video.py**: file to detect masks in a video file
+
+### Check the app at-> https://share.streamlit.io/aradhya-gupta/face_mask_detection/cv2_DNN_Model/app.py
